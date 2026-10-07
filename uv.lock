@@ -286,7 +286,7 @@ wheels = [
 ]
 
 [[package]]
-name = "local-inference-control-plane"
+name = "hearthbench"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

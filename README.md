@@ -1,4 +1,4 @@
-# Local LLM Benchmarking
+# hearthbench
 
 A local-first control plane for **serving, inventorying and benchmarking LLMs on
 Apple Silicon**. It finds the models already on disk, launches the right backend

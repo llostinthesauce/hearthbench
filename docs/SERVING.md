@@ -13,7 +13,7 @@ Everything else borrows.**
 ## 1. The map
 
 ```
-local-llm-benchmarking/      <-- the one core place
+hearthbench/                <-- the one core place
 ├── .venv/                  the Python that serves models (patched, see §6)
 ├── scripts/serve_local.sh  the only thing that starts a server
 ├── configs/

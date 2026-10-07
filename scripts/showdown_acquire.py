@@ -112,7 +112,7 @@ def _ssl_context() -> Optional["ssl.SSLContext"]:
 
 
 def _get_json(url: str, timeout: int = 60) -> Any:
-    request = urllib.request.Request(url, headers={"User-Agent": "local-inference-control-plane"})
+    request = urllib.request.Request(url, headers={"User-Agent": "hearthbench"})
     token = os.environ.get("HF_TOKEN") or os.environ.get("HUGGING_FACE_HUB_TOKEN")
     if token:
         request.add_header("Authorization", f"Bearer {token}")

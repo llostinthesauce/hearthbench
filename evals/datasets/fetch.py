@@ -27,7 +27,7 @@ from typing import Dict, List
 CACHE_DIR = Path(__file__).resolve().parents[1] / ".cache"
 MANIFEST = CACHE_DIR / "manifest.json"
 
-USER_AGENT = "local-llm-benchmarking/1.0 (+https://github.com/llostinthesauce/local-llm-benchmarking)"
+USER_AGENT = "hearthbench/0.1 (+https://github.com/llostinthesauce/hearthbench)"
 
 
 class FetchDisabled(RuntimeError):
