@@ -1,0 +1,22 @@
+--- a/mlx_lm/server.py
++++ b/mlx_lm/server.py
+@@ -862,7 +862,18 @@
+ 
+                 uids_to_remove = []
+                 for _ in self._time_budget:
+-                    prompt_responses, gen_responses = batch_generator.next()
++                    try:
++                        prompt_responses, gen_responses = batch_generator.next()
++                    except Exception as exc:
++                        logging.error(f"Error during batch_generator.next(): {exc}")
++                        for uid, res in list(batch_results.items()):
++                            res["rqueue"].put(exc)
++                        batch_results.clear()
++                        if batch_generator is not None:
++                            batch_generator.close()
++                            batch_generator = None
++                        mx.clear_cache()
++                        break
+                     if not prompt_responses and not gen_responses:
+                         break
+ 

@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "methodology": "aa-shaped-local-v1",
+  "profiles": {
+    "local_practical": {
+      "id": "local_practical",
+      "description": "Reduced single-user comparison for a primary workstation; not a full stress test or leaderboard score.",
+      "reduced": true,
+      "leaderboard_comparable": false,
+      "workloads": [
+        {"id": "short", "input_tokens": 1000, "min_output_tokens": 512, "max_output_tokens": 768},
+        {"id": "medium", "input_tokens": 8000, "min_output_tokens": 512, "max_output_tokens": 768},
+        {"id": "long", "input_tokens": 32000, "min_output_tokens": 512, "max_output_tokens": 768}
+      ],
+      "modes": [{"id": "sequential", "concurrency": 1}],
+      "cache_states": ["cold", "warm"],
+      "metrics": [
+        "time_to_first_token_s", "time_to_first_answer_s", "prompt_tokens_per_second",
+        "output_tokens_per_second", "batch_tokens_per_second", "end_to_end_s",
+        "peak_memory_bytes", "cache_state"
+      ],
+      "aggregation": {"primary": "median", "tail": ["p95"], "min_samples": 2},
+      "pairwise": {
+        "blind": true, "randomize_order": true, "swap_order": true,
+        "judge": "human_or_local", "scoring": "bradley_terry", "bootstrap_samples": 100
+      }
+    },
+    "aa_local_full": {
+      "id": "aa_local_full",
+      "description": "Local performance profile shaped like current hosted inference methodology; not leaderboard-comparable.",
+      "reduced": false,
+      "leaderboard_comparable": false,
+      "workloads": [
+        {"id": "short", "input_tokens": 1000, "min_output_tokens": 1000},
+        {"id": "medium", "input_tokens": 10000, "min_output_tokens": 1500},
+        {"id": "long", "input_tokens": 100000, "min_output_tokens": 2000}
+      ],
+      "modes": [
+        {"id": "sequential", "concurrency": 1},
+        {"id": "throughput_10", "concurrency": 10}
+      ],
+      "cache_states": ["cold", "warm"],
+      "metrics": [
+        "time_to_first_token_s",
+        "time_to_first_answer_s",
+        "prompt_tokens_per_second",
+        "output_tokens_per_second",
+        "batch_tokens_per_second",
+        "end_to_end_s",
+        "peak_memory_bytes",
+        "cache_state"
+      ],
+      "aggregation": {"primary": "median", "tail": ["p95"], "min_samples": 5},
+      "pairwise": {
+        "blind": true,
+        "randomize_order": true,
+        "swap_order": true,
+        "judge": "human_or_local",
+        "scoring": "bradley_terry",
+        "bootstrap_samples": 1000
+      }
+    },
+    "aa_local_smoke": {
+      "id": "aa_local_smoke",
+      "description": "Reduced validation profile for checking the harness without claiming performance comparability.",
+      "reduced": true,
+      "leaderboard_comparable": false,
+      "workloads": [
+        {"id": "short_smoke", "input_tokens": 256, "min_output_tokens": 64},
+        {"id": "medium_smoke", "input_tokens": 2048, "min_output_tokens": 128},
+        {"id": "long_smoke", "input_tokens": 8192, "min_output_tokens": 256}
+      ],
+      "modes": [{"id": "sequential", "concurrency": 1}],
+      "cache_states": ["warm"],
+      "metrics": [
+        "time_to_first_token_s",
+        "time_to_first_answer_s",
+        "prompt_tokens_per_second",
+        "output_tokens_per_second",
+        "batch_tokens_per_second",
+        "end_to_end_s",
+        "peak_memory_bytes",
+        "cache_state"
+      ],
+      "aggregation": {"primary": "median", "tail": ["p95"], "min_samples": 2},
+      "pairwise": {
+        "blind": true,
+        "randomize_order": true,
+        "swap_order": true,
+        "judge": "human_or_local",
+        "scoring": "bradley_terry",
+        "bootstrap_samples": 100
+      }
+    }
+  }
+}

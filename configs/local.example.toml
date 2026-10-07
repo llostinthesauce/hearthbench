@@ -1,0 +1,28 @@
+version = 1
+
+[models]
+# LM Studio is the canonical model store on this Mac.
+root = "~/.lmstudio/models"
+registry = "configs/models.local.json"
+
+[serving.sampling]
+# Server-side penalty defaults; serve_local.sh passes them to every launch.
+repetition_penalty = 1.05
+presence_penalty = 0.2
+repetition_context_size = 2048
+
+[endpoints.llamacpp]
+base_url = "http://127.0.0.1:8080/v1"
+
+[endpoints.mlx]
+base_url = "http://127.0.0.1:8085/v1"
+
+[endpoints.lmstudio]
+base_url = "http://127.0.0.1:1234/v1"
+
+# Register specialized private apps without moving them or committing paths.
+# [[external_projects]]
+# name = "example-context-app"
+# path = "/absolute/path/to/local"
+# model = "qwen3_27b_dense"
+# kind = "direct-mlx-kv-cache"

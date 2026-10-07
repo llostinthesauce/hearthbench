@@ -1,0 +1,39 @@
+--- a/mlx_lm/server.py
++++ b/mlx_lm/server.py
+@@ -1199,24 +1199,24 @@
+         self.top_k = self.body.get("top_k", self.response_generator.cli_args.top_k)
+         self.min_p = self.body.get("min_p", self.response_generator.cli_args.min_p)
+         cli_args = self.response_generator.cli_args
+-        self.repetition_penalty = self.body.get("repetition_penalty") or getattr(
++        self.repetition_penalty = self.body.get("repetition_penalty", getattr(
+             cli_args, "repetition_penalty", 0.0
+-        )
+-        self.repetition_context_size = self.body.get("repetition_context_size") or getattr(
++        ))
++        self.repetition_context_size = self.body.get("repetition_context_size", getattr(
+             cli_args, "repetition_context_size", 2048
+-        )
+-        self.presence_penalty = self.body.get("presence_penalty") or getattr(
++        ))
++        self.presence_penalty = self.body.get("presence_penalty", getattr(
+             cli_args, "presence_penalty", 0.0
+-        )
+-        self.presence_context_size = self.body.get("presence_context_size") or getattr(
++        ))
++        self.presence_context_size = self.body.get("presence_context_size", getattr(
+             cli_args, "presence_context_size", 2048
+-        )
+-        self.frequency_penalty = self.body.get("frequency_penalty") or getattr(
++        ))
++        self.frequency_penalty = self.body.get("frequency_penalty", getattr(
+             cli_args, "frequency_penalty", 0.0
+-        )
+-        self.frequency_context_size = self.body.get("frequency_context_size") or getattr(
++        ))
++        self.frequency_context_size = self.body.get("frequency_context_size", getattr(
+             cli_args, "frequency_context_size", 2048
+-        )
++        ))
+         self.xtc_probability = self.body.get("xtc_probability", 0.0)
+         self.xtc_threshold = self.body.get("xtc_threshold", 0.1)
+         self.logit_bias = self.body.get("logit_bias", None)

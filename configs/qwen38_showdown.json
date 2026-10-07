@@ -1,0 +1,252 @@
+{
+  "_comment": "Committed, path-free selection for the Qwen3.8-27B quantization showdown. Machine paths, sizes, and checksums live in the GENERATED manifest written by scripts/showdown_acquire.py. Do not put local paths here.",
+  "_schema_version": 1,
+  "experiment": "qwen38_27b_showdown",
+
+  "base_model": {
+    "repo": "Qwen/Qwen3.8-27B",
+    "revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+    "model_type": "qwen3_5",
+    "architectures": ["Qwen3_5ForConditionalGeneration"],
+    "license": "apache-2.0",
+    "_arch_notes": [
+      "Hybrid attention: 64 text layers, layer_types alternate three 'linear_attention' layers then one 'full_attention' (full_attention_interval=4). Only 16 layers hold a conventional KV cache; the rest carry a recurrent linear-attention state.",
+      "Consequence: KV-cache growth with context is roughly a quarter of a comparable all-full-attention 27B, so KV quantization buys far less here than on a standard dense model. Measure it; do not assume.",
+      "Multimodal: vision_config present, image_token_id/video_token_id defined. mlx_lm.server loads it as text fine (verified locally); GGUF carries a separate mmproj.",
+      "attn_output_gate=true, head_dim=256, hidden_size=5120, intermediate_size=17408.",
+      "Model-card sampling: temperature=1.0, top_p=0.95, top_k=20 (generation_config.json). The repository catalog's qwen3_27b_dense entry pins temp=0.7/top_p=0.95/top_k=20 for non-thinking agent use; the showdown uses temperature=0.0 for scored evals and records the value used."
+    ]
+  },
+
+  "serving_support": {
+    "_verified_on": "2026-09-18",
+    "mlx_lm": {
+      "version_checked": "0.31.3",
+      "loads_qwen3_5": true,
+      "kv_quantization": false,
+      "speculative_draft": "--draft-model exists but no qwen3_5_mtp implementation in mlx_lm.models",
+      "_note": "This is the daily-serving path (:8085, Pi, Mycelium). Native fp16 KV only."
+    },
+    "mlx_vlm": {
+      "version_checked": "0.6.17",
+      "loads_qwen3_5": true,
+      "kv_quantization": "--kv-bits / --kv-key-bits / --kv-value-bits, schemes uniform|turboquant, --kv-group-size, --quantized-kv-start",
+      "speculative_draft": "--draft-model with --draft-kind {dflash,eagle3,mtp}",
+      "_note": "KV quantization and MTP are ONLY available here. Any KV or MTP arm therefore needs an mlx_vlm KV-native control arm, or server and KV mode are confounded."
+    },
+    "llama_cpp": {
+      "version_checked": "build 10809 (0.4.0)",
+      "spec_types": ["none", "draft-simple", "draft-eagle3", "draft-mtp", "draft-dflash", "draft-dspark", "ngram-simple", "ngram-map-k", "ngram-map-k4v", "ngram-mod", "ngram-cache"],
+      "kv_quantization": "-ctk/-ctv",
+      "_note": "serve_local.sh defaults to -ctk q8_0 -ctv q8_0. That is a KV-quantized default, so the llama.cpp KV-native control arm must pass -ctk f16 -ctv f16 explicitly."
+    }
+  },
+
+  "artifacts": [
+    {
+      "id": "mlx_lms_4bit",
+      "tier": "core",
+      "role": "weight_ladder",
+      "runtime": "mlx",
+      "repo": "lmstudio-community/Qwen3.8-27B-MLX-4bit",
+      "revision": "6067b15cf581666a4aecf6af3afaba4bb5efc20c",
+      "quant_label": "MLX-4bit",
+      "quant_method": "mlx affine, group_size=64, bits=4, uniform (no per-module overrides)",
+      "measured_bpw": 4.69,
+      "converter": "LM Studio team, mlx_vlm.convert",
+      "_note": "Already on disk. Bottom of the single-provider uniform ladder."
+    },
+    {
+      "id": "mlx_lms_5bit",
+      "tier": "core",
+      "role": "weight_ladder",
+      "runtime": "mlx",
+      "repo": "lmstudio-community/Qwen3.8-27B-MLX-5bit",
+      "revision": "b9ad7b92aa2fd07b041f4b8b3aa459941f8abbf7",
+      "quant_label": "MLX-5bit",
+      "quant_method": "mlx affine, group_size=64, bits=5, uniform",
+      "measured_bpw": 5.67,
+      "converter": "LM Studio team, mlx_vlm.convert"
+    },
+    {
+      "id": "mlx_lms_6bit",
+      "tier": "core",
+      "role": "weight_ladder",
+      "runtime": "mlx",
+      "repo": "lmstudio-community/Qwen3.8-27B-MLX-6bit",
+      "revision": "05f38c1f39e2f39619653616fe8e96a5d676358e",
+      "quant_label": "MLX-6bit",
+      "quant_method": "mlx affine, group_size=64, bits=6, uniform",
+      "measured_bpw": 6.65,
+      "converter": "LM Studio team, mlx_vlm.convert",
+      "_note": "Hypothesis: daily-driver sweet spot. Designed to be falsifiable against 5bit and oQ4."
+    },
+    {
+      "id": "mlx_lms_8bit",
+      "tier": "core",
+      "role": "weight_ladder",
+      "runtime": "mlx",
+      "repo": "lmstudio-community/Qwen3.8-27B-MLX-8bit",
+      "revision": "241ebb5f1d60b122fd653da658836a55feb9e2b0",
+      "quant_label": "MLX-8bit",
+      "quant_method": "mlx affine, group_size=64, bits=8, uniform",
+      "measured_bpw": 8.61,
+      "converter": "LM Studio team, mlx_vlm.convert",
+      "_note": "Already on disk. Quality reference for the MLX path."
+    },
+    {
+      "id": "mlx_oq4",
+      "tier": "method",
+      "role": "quant_method_contrast",
+      "runtime": "mlx",
+      "repo": "mlx-community/Qwen3.8-27B-oQ4",
+      "revision": "fa6d24bbb0d5462ce0ca4d918dc8cb64fb77c43c",
+      "quant_label": "MLX-oQ4",
+      "quant_method": "oQ mixed precision (oMLX v0.6.0rc1), affine base bits=4 group_size=64 with 161 per-module bit overrides",
+      "measured_bpw": 4.86,
+      "converter": "jundot/omlx oQ",
+      "_note": "Sensitivity-aware counterpart to mlx_lms_4bit at near-identical footprint (4.86 vs 4.69 bpw). The controlled test of allocation-vs-uniform at the memory-constrained end. The ARTIFACT is ordinary MLX safetensors loadable by mlx_lm/mlx_vlm; using it does NOT reintroduce oMLX as a serving path, which stays retired."
+    },
+    {
+      "id": "mlx_mtp_draft_4bit",
+      "tier": "method",
+      "role": "mtp_drafter",
+      "runtime": "mlx",
+      "repo": "mlx-community/Qwen3.8-27B-MTP-4bit",
+      "revision": "b643c01b6d3b094e325edb6ebd832e16c486c575",
+      "quant_label": "MTP-draft-4bit",
+      "quant_method": "mlx affine group_size=64 bits=4; model_type qwen3_5_mtp",
+      "is_drafter": true,
+      "_note": "Drafter head only (~0.24 GB), not a standalone model. Pairs with an MLX target via mlx_vlm.server --draft-model --draft-kind mtp. mlx_lm has no qwen3_5_mtp implementation at 0.31.3, so this is an mlx_vlm-only arm."
+    },
+    {
+      "id": "mlx_mtp_draft_8bit",
+      "tier": "method",
+      "role": "mtp_drafter",
+      "runtime": "mlx",
+      "repo": "mlx-community/Qwen3.8-27B-MTP-8bit",
+      "revision": "e88e48d055732ad75d9435f3059139d5279f2064",
+      "quant_label": "MTP-draft-8bit",
+      "quant_method": "mlx affine group_size=64 bits=8; model_type qwen3_5_mtp",
+      "is_drafter": true
+    },
+    {
+      "id": "gguf_bartowski_q4_k_m",
+      "tier": "core",
+      "role": "weight_ladder",
+      "runtime": "llamacpp",
+      "repo": "bartowski/Qwen3.8-27B-GGUF",
+      "revision": "125a02af4987b57c7deb88d7f2ec58a5725c07c0",
+      "files": ["Qwen3.8-27B-Q4_K_M.gguf"],
+      "quant_label": "Q4_K_M",
+      "quant_method": "llama-quantize Q4_K_M with imatrix calibration",
+      "converter": "bartowski",
+      "_note": "Single-provider GGUF ladder base. bartowski is the only reputable source carrying the complete Q4_K_M/Q5_K_M/Q6_K set for this model."
+    },
+    {
+      "id": "gguf_bartowski_q5_k_m",
+      "tier": "core",
+      "role": "weight_ladder",
+      "runtime": "llamacpp",
+      "repo": "bartowski/Qwen3.8-27B-GGUF",
+      "revision": "125a02af4987b57c7deb88d7f2ec58a5725c07c0",
+      "files": ["Qwen3.8-27B-Q5_K_M.gguf"],
+      "quant_label": "Q5_K_M",
+      "quant_method": "llama-quantize Q5_K_M with imatrix calibration",
+      "converter": "bartowski"
+    },
+    {
+      "id": "gguf_bartowski_q6_k",
+      "tier": "core",
+      "role": "weight_ladder",
+      "runtime": "llamacpp",
+      "repo": "bartowski/Qwen3.8-27B-GGUF",
+      "revision": "125a02af4987b57c7deb88d7f2ec58a5725c07c0",
+      "files": ["Qwen3.8-27B-Q6_K.gguf"],
+      "quant_label": "Q6_K",
+      "quant_method": "llama-quantize Q6_K with imatrix calibration",
+      "converter": "bartowski"
+    },
+    {
+      "id": "gguf_lms_q4_k_m",
+      "tier": "core",
+      "role": "provider_contrast",
+      "runtime": "llamacpp",
+      "repo": "lmstudio-community/Qwen3.8-27B-GGUF",
+      "revision": "5a7da681f60570ab5b439a587e912d2e5eddb582",
+      "files": ["Qwen3.8-27B-Q4_K_M.gguf", "mmproj-Qwen3.8-27B-BF16.gguf"],
+      "quant_label": "Q4_K_M",
+      "quant_method": "llama-quantize Q4_K_M, no imatrix (16.81 GB vs bartowski's 17.44 GB for the same nominal quant)",
+      "converter": "LM Studio team",
+      "_note": "Already on disk. Zero-cost control for 'two files labelled Q4_K_M are not the same file'. Any measured gap between this and gguf_bartowski_q4_k_m is a conversion-recipe effect, not a quant-level effect."
+    },
+    {
+      "id": "gguf_mtp_draft",
+      "tier": "method",
+      "role": "mtp_drafter",
+      "runtime": "llamacpp",
+      "repo": "ggml-org/Qwen3.8-27B-GGUF",
+      "revision": "0669b98607d47046c7c2b3f801011d54a08cfccf",
+      "files": ["mtp-Qwen3.8-27B-Q4_0.gguf"],
+      "quant_label": "MTP-draft-Q4_0",
+      "is_drafter": true,
+      "_note": "Official ggml-org MTP draft head for llama.cpp --spec-type draft-mtp. Vocab compatibility with a bartowski target is same-base-model but must be proven at smoke time, not assumed."
+    },
+    {
+      "id": "gguf_bartowski_q8_0",
+      "tier": "optional",
+      "role": "high_precision_reference",
+      "runtime": "llamacpp",
+      "repo": "bartowski/Qwen3.8-27B-GGUF",
+      "revision": "125a02af4987b57c7deb88d7f2ec58a5725c07c0",
+      "files": ["Qwen3.8-27B-Q8_0.gguf"],
+      "quant_label": "Q8_0",
+      "quant_method": "llama-quantize Q8_0",
+      "converter": "bartowski",
+      "_note": "Not queued by default. MLX-8bit already provides a high-precision reference and costs no download. Add with --tier optional if the GGUF ladder needs its own ceiling."
+    },
+    {
+      "id": "deriv_huihui_q6_k",
+      "tier": "derivative",
+      "role": "derivative",
+      "runtime": "llamacpp",
+      "repo": "huihui-ai/Huihui-Qwen3.8-27B-abliterated-GGUF",
+      "revision": "c21e1a9a454946b268c74642a257355c2f54ad5c",
+      "files": ["Huihui-Qwen3.8-27B-abliterated-Q6_K.gguf"],
+      "quant_label": "Q6_K",
+      "quant_method": "abliterated weights then llama-quantize Q6_K; 22.43 GB, byte-for-byte the same size as the stock lmstudio-community Q6_K, indicating the same quant recipe",
+      "modification": "refusal ablation (remove-refusals-with-transformers), layers 18-51 only; model card states MTP and vision heads unmodified",
+      "selection_rationale": "Highest adoption of the five candidates (2.83M downloads, 784 likes) and the only one still being updated (2026-09-18). Single-axis modification with a documented layer range, standard packaging, no patched runtime required.",
+      "_note": "Deferred tier. Pick its quant AFTER the core ladder identifies the best standard precision; Q6_K is the default placeholder, overridable with --quant."
+    },
+    {
+      "id": "deriv_obliteratus_q6_k",
+      "tier": "derivative",
+      "role": "derivative",
+      "runtime": "llamacpp",
+      "repo": "OBLITERATUS/Qwen3.8-27B-OBLITERATED",
+      "revision": "a58c3b53b3ce71551eafde2ed5ec8df48e0f4ff8",
+      "files": ["Qwen3.8-27B-OBLITERATED-Q6_K.gguf"],
+      "quant_label": "Q6_K",
+      "quant_method": "abliterated weights then llama-quantize Q6_K; 22.43 GB, same size as stock Q6_K",
+      "modification": "refusal_direction_ablation, method=aggressive, 5 SVD directions, whitened SVD, norm-preserving, 3 refinement passes, layer_selection=knee_cosmic with min_layer_fraction 0.4 (from the repo's own abliteration_metadata.json)",
+      "selection_rationale": "The only candidate publishing a full machine-readable record of its own modification, plus a hard_negative_residue.json. 1260 likes. Its bf16 safetensors also permit a later MLX conversion if a same-serving-path comparison is wanted.",
+      "_note": "Deferred tier."
+    }
+  ],
+
+  "rejected_candidates": [
+    {
+      "repo": "HauhauCS/Qwen3.8-27B-Uncensored-HauhauCS-Aggressive-MTP-GGUF",
+      "reason": "Best provenance packaging of the five (Ed25519-signed FastMTP-PROVENANCE.json, SHA256SUMS, release manifest) but it ships HauhauCS-FastMTP-llama.cpp.patch, i.e. FastMTP needs a patched llama.cpp. That fails the 'compatible with the serving path we intend to test' bar and would make its results non-comparable against stock llama-server arms. Reconsider only as a dedicated FastMTP study."
+    },
+    {
+      "repo": "0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF",
+      "reason": "105 GGUF files under an unrelated 'RVN-*' naming scheme that does not match the repo or model name, plus xet_speed_test.bin and xet_test_100mb.bin committed into the repo. Packaging hygiene is too poor to trust an unexplained artifact selection."
+    },
+    {
+      "repo": "DavidAU/Qwen3.8-27B-TURBO-Fable-Cold-Fusion-735-882-Heretic-Uncensored-NEO-CODER-MAX-MTP-GGUF",
+      "reason": "Its base_model is itself a DavidAU multi-stage merge, not stock Qwen3.8-27B. Several modifications (merge, Heretic, NEO-CODER tuning, MTP) are stacked at once, so a measured difference cannot be attributed to any one of them. Interesting model; unusable as a controlled derivative comparison."
+    }
+  ]
+}

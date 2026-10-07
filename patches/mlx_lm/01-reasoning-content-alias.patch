@@ -1,0 +1,20 @@
+--- a/mlx_lm/server.py
++++ b/mlx_lm/server.py
+@@ -132,6 +132,17 @@
+ 
+     """
+     for message in messages:
++        # Round-trip fix: this server EMITS assistant thinking as `reasoning`
++        # (see the `choice[key_name]["reasoning"]` assignment below), but Qwen3
++        # chat templates read historical thinking from `reasoning_content`.
++        # A client that echoes our own field back therefore loses every prior
++        # turn's reasoning, and the model re-derives from a history in which it
++        # appears to have thought nothing -- which degenerates into verbatim
++        # repetition after ~10 tool-using turns. Alias it before rendering.
++        if message.get("role") == "assistant" and not message.get("reasoning_content"):
++            if reasoning := message.get("reasoning"):
++                message["reasoning_content"] = reasoning
++
+         content = message.get("content")
+         if isinstance(content, list):
+             text_fragments = [

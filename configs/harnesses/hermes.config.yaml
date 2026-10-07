@@ -1,0 +1,30 @@
+# Hermes Agent — Qwen3.8-27B on the local MLX server.
+# UNVERIFIED: Hermes is not installed on this machine as of 2026-09-06. The schema
+# below follows NousResearch's docs; confirm it on the wire (point base_url at a
+# capture proxy) the same way pi.models.json was confirmed, before trusting it.
+#
+# Install (official, vendor domain — the npm `hermes-agent` package is a THIRD-PARTY
+# wrapper by `wyrtensi`, not NousResearch; do not use it):
+#   curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash
+# Writes ~/.hermes/config.yaml and ~/.hermes/.env.
+
+model:
+  default: default_model
+  provider: custom
+  base_url: http://127.0.0.1:8085/v1
+  api_key: mlx
+
+  # Qwen3.8's reasoning lever. mlx_lm.server reads ONLY chat_template_kwargs —
+  # it has no top-level `reasoning_effort` field — so it must arrive via extra_body.
+  # Levels: xhigh (default) | medium | low. `medium` is literally no instruction:
+  # the chat template's medium branch emits an empty string. Core policy:
+  # thinking is opt-in and explicit effort is capped at `medium` —
+  # xhigh reproduced a 28,598-character reasoning loop on this model.
+  extra_body:
+    chat_template_kwargs:
+      enable_thinking: false   # set true to opt in; unset means xhigh thinking
+      reasoning_effort: medium
+
+# Hermes requires >= 64,000 tokens of context for agent use with tools. The
+# usable ceiling for Qwen3.8-27B on this Mac is 65,536 (Metal working set;
+# 131,072 OOMs), so it clears the minimum with little headroom.

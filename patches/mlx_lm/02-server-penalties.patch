@@ -1,0 +1,75 @@
+--- a/mlx_lm/server.py
++++ b/mlx_lm/server.py
+@@ -3,6 +3,7 @@
+ import argparse
+ import json
+ import logging
++import os
+ import pickle
+ import platform
+ import socket
+@@ -1188,12 +1189,25 @@
+         self.top_p = self.body.get("top_p", self.response_generator.cli_args.top_p)
+         self.top_k = self.body.get("top_k", self.response_generator.cli_args.top_k)
+         self.min_p = self.body.get("min_p", self.response_generator.cli_args.min_p)
+-        self.repetition_penalty = self.body.get("repetition_penalty", 0.0)
+-        self.repetition_context_size = self.body.get("repetition_context_size", 20)
+-        self.presence_penalty = self.body.get("presence_penalty", 0.0)
+-        self.presence_context_size = self.body.get("presence_context_size", 20)
+-        self.frequency_penalty = self.body.get("frequency_penalty", 0.0)
+-        self.frequency_context_size = self.body.get("frequency_context_size", 20)
++        cli_args = self.response_generator.cli_args
++        self.repetition_penalty = self.body.get("repetition_penalty") or getattr(
++            cli_args, "repetition_penalty", 0.0
++        )
++        self.repetition_context_size = self.body.get("repetition_context_size") or getattr(
++            cli_args, "repetition_context_size", 2048
++        )
++        self.presence_penalty = self.body.get("presence_penalty") or getattr(
++            cli_args, "presence_penalty", 0.0
++        )
++        self.presence_context_size = self.body.get("presence_context_size") or getattr(
++            cli_args, "presence_context_size", 2048
++        )
++        self.frequency_penalty = self.body.get("frequency_penalty") or getattr(
++            cli_args, "frequency_penalty", 0.0
++        )
++        self.frequency_context_size = self.body.get("frequency_context_size") or getattr(
++            cli_args, "frequency_context_size", 2048
++        )
+         self.xtc_probability = self.body.get("xtc_probability", 0.0)
+         self.xtc_threshold = self.body.get("xtc_threshold", 0.0)
+         self.logit_bias = self.body.get("logit_bias", None)
+@@ -1854,8 +1868,32 @@
+         type=int,
+         default=512,
+         help="Default maximum number of tokens to generate (default: 512)",
++    )
++    parser.add_argument(
++        "--repetition-penalty",
++        type=float,
++        default=float(os.environ.get("MLX_REPETITION_PENALTY", 0.0)),
++        help="Default repetition penalty (default: 0.0, disabled)",
++    )
++    parser.add_argument(
++        "--repetition-context-size",
++        type=int,
++        default=int(os.environ.get("MLX_REPETITION_CONTEXT_SIZE", 2048)),
++        help="Default repetition context size in tokens (default: 2048)",
++    )
++    parser.add_argument(
++        "--presence-penalty",
++        type=float,
++        default=float(os.environ.get("MLX_PRESENCE_PENALTY", 0.0)),
++        help="Default presence penalty (default: 0.0, disabled)",
+     )
+     parser.add_argument(
++        "--presence-context-size",
++        type=int,
++        default=int(os.environ.get("MLX_PRESENCE_CONTEXT_SIZE", 2048)),
++        help="Default presence context size in tokens (default: 2048)",
++    )
++    parser.add_argument(
+         "--chat-template-args",
+         type=json.loads,
+         help="""A JSON formatted string of arguments for the tokenizer's apply_chat_template, e.g. '{"enable_thinking":false}'""",

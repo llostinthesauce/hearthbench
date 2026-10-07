@@ -1,0 +1,122 @@
+{
+  "providers": {
+    "llamacpp": {
+      "name": "llama.cpp (:8080)",
+      "baseUrl": "http://127.0.0.1:8080/v1",
+      "api": "openai-completions",
+      "apiKey": "dummy",
+      "compat": {
+        "supportsDeveloperRole": false,
+        "supportsReasoningEffort": false
+      },
+      "models": [
+        {
+          "id": "local-llamacpp",
+          "name": "Loaded llama.cpp model",
+          "reasoning": false,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 32768,
+          "samplingParams": {
+            "temperature": 0.7,
+            "presence_penalty": 0.2,
+            "repetition_penalty": 1.05
+          }
+        }
+      ]
+    },
+    "mlx": {
+      "name": "MLX Direct (:8085)",
+      "baseUrl": "http://127.0.0.1:8085/v1",
+      "api": "openai-completions",
+      "apiKey": "mlx",
+      "compat": {
+        "supportsDeveloperRole": false,
+        "supportsReasoningEffort": true,
+        "thinkingFormat": "chat-template",
+        "chatTemplateKwargs": {
+          "reasoning_effort": {
+            "$var": "thinking.effort",
+            "omitWhenOff": true
+          },
+          "enable_thinking": {
+            "$var": "thinking.enabled"
+          }
+        }
+      },
+      "models": [
+        {
+          "id": "default_model",
+          "name": "Loaded MLX model",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 32768,
+          "samplingParams": {
+            "temperature": 0.7,
+            "presence_penalty": 0.2,
+            "repetition_penalty": 1.05
+          },
+          "thinkingLevelMap": {
+            "minimal": "low",
+            "low": "low",
+            "medium": "medium",
+            "high": "medium",
+            "xhigh": "medium",
+            "max": "medium"
+          }
+        }
+      ]
+    },
+    "lmstudio": {
+      "name": "LM Studio (:1234)",
+      "baseUrl": "http://127.0.0.1:1234/v1",
+      "api": "openai-completions",
+      "apiKey": "lmstudio",
+      "compat": {
+        "supportsDeveloperRole": false,
+        "supportsReasoningEffort": true,
+        "thinkingFormat": "chat-template",
+        "chatTemplateKwargs": {
+          "reasoning_effort": {
+            "$var": "thinking.effort",
+            "omitWhenOff": true
+          },
+          "enable_thinking": {
+            "$var": "thinking.enabled"
+          }
+        }
+      },
+      "models": [
+        {
+          "id": "local-lmstudio",
+          "name": "Loaded LM Studio model",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 16384,
+          "samplingParams": {
+            "temperature": 0.7,
+            "presence_penalty": 0.2,
+            "repetition_penalty": 1.05
+          },
+          "thinkingLevelMap": {
+            "minimal": "low",
+            "low": "low",
+            "medium": "medium",
+            "high": "medium",
+            "xhigh": "medium",
+            "max": "medium"
+          }
+        }
+      ]
+    }
+  }
+}

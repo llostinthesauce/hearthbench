@@ -1,0 +1,541 @@
+{
+  "_comment": "Public model metadata and discovery rules. No local machine paths belong in this file.",
+  "_schema_version": 1,
+  "_sampling_notes": "Effective sampling recipes distinguish model-card recommendations from historical local tuning. Installed metadata declares text context; native allocation is default and local context measurements are advisory.",
+  "defaults": {
+    "temperature": 0.7,
+    "top_p": 0.8,
+    "top_k": 20,
+    "repetition_penalty": 1.0,
+    "presence_penalty": 0.0,
+    "repetition_context_size": 2048
+  },
+  "model_families": [
+    {
+      "id": "qwen3_35b_moe_mtp",
+      "name": "Qwen3.6-35B-A3B MTP (MoE, self-speculative)",
+      "family": "qwen3",
+      "architecture": "moe",
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "enable_thinking": false,
+      "reasoning_effort": "medium",
+      "reasoning_budget": 4096,
+      "mtp_supported": true,
+      "spec_type": "draft-mtp",
+      "spec_draft_n_max": 2,
+      "_notes": "Unsloth MTP build with an embedded multi-token-prediction head \u2014 self-speculative, no separate draft GGUF. Measured 77.6% draft accept. Requires llama-server with --spec-type draft-mtp (>= b9610); verified on b10360. The GGUF is named Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf, so only the parent directory identifies it as MTP \u2014 the pattern must match the path.",
+      "gguf_patterns": [
+        "Qwen3\\.6-35B-A3B-MTP-GGUF/.*\\.gguf$"
+      ],
+      "mlx_patterns": [],
+      "context_policy": {
+        "default": "native",
+        "recommended_tokens": null,
+        "verified_tokens": null
+      },
+      "repetition_penalty": 1.05,
+      "presence_penalty": 0.2
+    },
+    {
+      "id": "qwen3_35b_moe_uncensored",
+      "name": "Qwen3.6-35B-A3B Uncensored (HauhauCS Aggressive)",
+      "family": "qwen3",
+      "architecture": "moe",
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "enable_thinking": false,
+      "reasoning_effort": "medium",
+      "reasoning_budget": 4096,
+      "_notes": "Third-party abliterated fine-tune, NOT stock Qwen. Registered as its own family so `qwen35` cannot silently resolve to it \u2014 any result labelled Qwen3.6-35B-A3B must come from stock weights to be comparable.",
+      "gguf_patterns": [
+        "Qwen3\\.6-35B-A3B-Uncensored.*\\.gguf$"
+      ],
+      "mlx_patterns": [],
+      "context_policy": {
+        "default": "native",
+        "recommended_tokens": null,
+        "verified_tokens": null
+      },
+      "repetition_penalty": 1.05,
+      "presence_penalty": 0.2,
+      "sampling_recipe": "hauhau_nonthinking_card",
+      "sampling_modes": {
+        "nonthinking": "hauhau_nonthinking_card",
+        "thinking": "hauhau_thinking_card"
+      },
+      "model_card": "https://huggingface.co/HauhauCS/Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive"
+    },
+    {
+      "id": "qwen3_35b_moe",
+      "name": "Qwen3.6-35B-A3B (MoE)",
+      "family": "qwen3",
+      "architecture": "moe",
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "enable_thinking": false,
+      "reasoning_effort": "medium",
+      "reasoning_budget": 4096,
+      "gguf_patterns": [
+        "Qwen3\\.6-35B-A3B(?!.*(?:MTP|Uncensored)).*\\.gguf$"
+      ],
+      "mlx_patterns": [
+        "Qwen3\\.[56]-35B-A3B.*(?:mlx|4bit|5bit|6bit|8bit)"
+      ],
+      "context_policy": {
+        "default": "native",
+        "recommended_tokens": null,
+        "verified_tokens": null
+      },
+      "repetition_penalty": 1.05,
+      "presence_penalty": 0.2
+    },
+    {
+      "id": "qwen3_8_27b_abliterated",
+      "name": "Qwen3.8-27B abliterated / uncensored derivatives",
+      "family": "qwen3",
+      "architecture": "dense",
+      "temperature": 0.7,
+      "top_p": 0.95,
+      "top_k": 20,
+      "repetition_penalty": 1.05,
+      "presence_penalty": 0.2,
+      "repetition_context_size": 2048,
+      "enable_thinking": false,
+      "reasoning_effort": "medium",
+      "reasoning_budget": 4096,
+      "_notes": "Third-party refusal-ablated fine-tunes of Qwen3.8-27B, NOT stock weights. Registered as its own family for the same reason as qwen3_35b_moe_uncensored: `qwen27` must never silently resolve to one of these, and any number reported as Qwen3.8-27B has to come from stock weights to be comparable. Listed before qwen3_27b_dense because discovery is first-match-wins.",
+      "gguf_patterns": [
+        "Qwen3\\.8-27B[^/]*(?:abliterated|OBLITERATED|Uncensored|Heretic)[^/]*\\.gguf$",
+        "(?:Huihui|OBLITERATUS)[^/]*Qwen3\\.8-27B[^/]*\\.gguf$"
+      ],
+      "mlx_patterns": [
+        "Qwen3\\.8-27B[^/]*(?:abliterated|OBLITERATED|Uncensored|Heretic)[^/]*(?:mlx|4bit|5bit|6bit|8bit|oQ\\d)[^/]*$"
+      ],
+      "context_policy": {
+        "default": "native",
+        "recommended_tokens": 65536,
+        "verified_tokens": null,
+        "evidence": "Inherited from qwen3_27b_dense (same Qwen3.8-27B architecture and KV-cache size; weights equal or larger): MLX 131072 prefill OOM observed there. Not separately measured. Recommended working budget set 2026-10-05; raise only with memory evidence."
+      },
+      "model_card": "https://huggingface.co/OBLITERATUS/Qwen3.8-27B-OBLITERATED"
+    },
+    {
+      "id": "hemmingway_1_27b",
+      "name": "Altworld Hemmingway-1 (Qwen3.8-27B writing fine-tune)",
+      "family": "qwen3",
+      "architecture": "dense",
+      "use_case": "writing",
+      "temperature": 1.0,
+      "top_p": 0.95,
+      "top_k": 20,
+      "repetition_penalty": 1.05,
+      "presence_penalty": 0.2,
+      "repetition_context_size": 2048,
+      "enable_thinking": false,
+      "reasoning_effort": "medium",
+      "reasoning_budget": 4096,
+      "_notes": "Third-party fine-tune of Qwen3.8-27B (model_type qwen3_5, same hybrid attention) trained for human-sounding everyday writing: messages, email, short prose. NOT stock weights, so it is its own family and never resolves from `qwen27`; its paths never say 'qwen', so the stock patterns cannot claim it anyway. Sampling is the model card's (temp 1.0, top_p 0.95) with generation_config.json's top_k 20; the penalties match the other Qwen3.8-27B entries. Its chat template defaults to thinking ON at reasoning_effort xhigh when no kwarg is sent and accepts only xhigh, medium or low, so enable_thinking false plus medium is recorded here to reach the server as --chat-template-args. Upstream licence is CC BY-NC 4.0 (non-commercial); some quant cards say Apache-2.0, which the upstream licence overrides.",
+      "gguf_patterns": [
+        "Hemmingway-1[^/]*\\.gguf$"
+      ],
+      "mlx_patterns": [
+        "Hemmingway-1[^/]*(?:mlx|4bit|5bit|6bit|8bit|oQ\\d)[^/]*$"
+      ],
+      "context_policy": {
+        "default": "native",
+        "recommended_tokens": 65536,
+        "verified_tokens": null,
+        "evidence": "Inherited from qwen3_27b_dense (same Qwen3.8-27B architecture and KV-cache size; weights equal or larger): MLX 131072 prefill OOM observed there. Not separately measured. Recommended working budget set 2026-10-05; raise only with memory evidence."
+      },
+      "model_card": "https://huggingface.co/hermitdave/Hemmingway-1-MLX-6bit"
+    },
+    {
+      "id": "qwen3_8_27b_mtp_draft",
+      "name": "Qwen3.8-27B MTP drafter heads",
+      "family": "qwen3",
+      "architecture": "dense",
+      "is_drafter": true,
+      "_notes": "Speculative-decoding draft heads, not standalone models. The MLX drafters (~0.2-0.5 GB directories) are discovered here so they are not offered as servable models and are not folded into the stock family. GGUF drafters are never registered at all: discover_models._skip_candidate drops files named mtp-*.gguf by design, and the showdown runner passes those by explicit path. Pair a drafter with a target: llama-server --spec-type draft-mtp --spec-draft-model <gguf>, or mlx_vlm.server --draft-model <dir> --draft-kind mtp. mlx_lm 0.31.3 has no qwen3_5_mtp implementation, so the MLX drafters are mlx_vlm-only.",
+      "gguf_patterns": [],
+      "mlx_patterns": [
+        "Qwen3\\.8-27B-MTP-(?:4bit|8bit|bf16|mxfp4|mxfp8|nvfp4)"
+      ],
+      "context_policy": {
+        "default": "native",
+        "recommended_tokens": null,
+        "verified_tokens": null
+      }
+    },
+    {
+      "id": "qwen3_27b_dense",
+      "name": "Qwen3.x 27B (Dense)",
+      "family": "qwen3",
+      "architecture": "dense",
+      "temperature": 0.7,
+      "top_p": 0.95,
+      "top_k": 20,
+      "repetition_penalty": 1.05,
+      "presence_penalty": 0.2,
+      "repetition_context_size": 2048,
+      "enable_thinking": false,
+      "reasoning_effort": "medium",
+      "reasoning_budget": 4096,
+      "preferred": {
+        "mlx": "Qwen3.8-27B-oQ4",
+        "llamacpp": "Qwen3.8-27B-Q5_K_M.gguf"
+      },
+      "gguf_patterns": [
+        "(?<!mtp-)Qwen3\\.[568]-27B(?![^/]*(?:abliterated|OBLITERATED|Uncensored|Heretic|Fable|Cold-Fusion))[^/]*\\.gguf$"
+      ],
+      "mlx_patterns": [
+        "(?<!MTP-)Qwen3\\.[568]-27B(?![^/]*(?:MTP|abliterated|OBLITERATED|Uncensored|Heretic))[^/]*(?:mlx|4bit|5bit|6bit|8bit|oQ\\d|OptiQ)[^/]*$"
+      ],
+      "_notes": "Stock Qwen3.8-27B (model_type qwen3_5): hybrid linear/full attention, full_attention_interval=4, so only 16 of 64 layers hold a KV cache. Multimodal (vision_config present) but served as text by mlx_lm. The MLX patterns also admit oQ/OptiQ mixed-precision conversions, which are ordinary MLX safetensors with per-module bit overrides. Two different providers can both ship 'Q4_K_M'; the registry distinguishes them by path, not by quant label. `preferred` records the September 2026 matrix result: oQ4 (4.86 bpw mixed per-module) tied the highest capability at 0.987 while running 33% faster than 6-bit; Q5_K_M dominates Q6_K on capability, speed, size and energy, so Q6_K buys nothing. 6-bit and 8-bit are never defaults and must not be escalation targets \u2014 8-bit was the worst arm measured.",
+      "context_policy": {
+        "default": "native",
+        "recommended_tokens": 65536,
+        "verified_tokens": null,
+        "evidence": "Historical September matrix used 65536 on tested arms; MLX 131072 prefill OOM observed. These observations are not acceptance for every variant or backend. Native allocation remains default. Recommended working budget 65536 set 2026-10-05 from that evidence; raise only with memory evidence (harness-lab Phase 2 context scaling)."
+      },
+      "sampling_recipe": "qwen38_nonthinking_card",
+      "sampling_modes": {
+        "nonthinking": "qwen38_nonthinking_card",
+        "thinking": "qwen38_thinking_card"
+      },
+      "alternative_sampling_recipes": [
+        "qwen38_local_tuning"
+      ],
+      "model_card": "https://huggingface.co/Qwen/Qwen3.8-27B"
+    },
+    {
+      "id": "gemma4_26b_moe",
+      "name": "Gemma 4 26B A4B (MoE)",
+      "family": "gemma4",
+      "architecture": "moe",
+      "temperature": 1.0,
+      "top_p": 0.95,
+      "top_k": 64,
+      "gguf_patterns": [
+        "gemma-4-26[Bb]-[Aa]4[Bb].*\\.gguf$"
+      ],
+      "mlx_patterns": [
+        "gemma-4-26[Bb]-[Aa]4[Bb].*(?:mlx|4bit|5bit|6bit|8bit|qat)"
+      ],
+      "context_policy": {
+        "default": "native",
+        "recommended_tokens": null,
+        "verified_tokens": null
+      },
+      "sampling_recipe": "gemma4_card"
+    },
+    {
+      "id": "gemma4_31b_dense",
+      "name": "Gemma 4 31B (Dense)",
+      "family": "gemma4",
+      "architecture": "dense",
+      "temperature": 1.0,
+      "top_p": 0.95,
+      "top_k": 64,
+      "gguf_patterns": [
+        "gemma-4-31[Bb].*\\.gguf$"
+      ],
+      "mlx_patterns": [
+        "gemma-4-31[Bb].*(?:MLX|mlx|4bit|5bit|6bit|8bit)"
+      ],
+      "context_policy": {
+        "default": "native",
+        "recommended_tokens": null,
+        "verified_tokens": null
+      },
+      "sampling_recipe": "gemma4_card"
+    },
+    {
+      "id": "gemma4_e4b_dense",
+      "name": "Gemma 4 E4B (Dense)",
+      "family": "gemma4",
+      "architecture": "dense",
+      "mlx_server": "mlx_vlm",
+      "temperature": 1.0,
+      "top_p": 0.95,
+      "top_k": 64,
+      "gguf_patterns": [
+        "gemma-4-[Ee]4[Bb].*\\.gguf$"
+      ],
+      "mlx_patterns": [
+        "gemma-4-[Ee]4[Bb].*(?:MLX|mlx|4bit)"
+      ],
+      "context_policy": {
+        "default": "native",
+        "recommended_tokens": null,
+        "verified_tokens": null
+      },
+      "sampling_recipe": "gemma4_card"
+    },
+    {
+      "id": "laguna_xs_33b_moe",
+      "name": "Poolside Laguna XS 2.1 (33B-A3B MoE)",
+      "family": "laguna",
+      "architecture": "moe",
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "_notes": "Released 2026-07-02, OpenMDW-1.1. Built for agentic coding on a single machine \u2014 the closest direct rival to Qwen3.6-35B-A3B on this hardware. Official GGUF at poolside/Laguna-XS-2.1-GGUF (Q4_K_M recommended); community MLX at AtomicChat/Laguna-XS-2.1-MLX-5bit. Sampling values here are the catalog defaults, NOT verified model-card values \u2014 check the card before quoting quality numbers.",
+      "gguf_patterns": [
+        "Laguna-XS-2\\.1.*\\.gguf$"
+      ],
+      "mlx_patterns": [
+        "Laguna-XS-2\\.1.*(?:MLX|mlx|4bit|5bit|6bit|8bit)"
+      ],
+      "context_policy": {
+        "default": "native",
+        "recommended_tokens": null,
+        "verified_tokens": null
+      }
+    },
+    {
+      "id": "north_mini_code_30b_moe",
+      "name": "Cohere North Mini Code 1.0 (30B-A3B MoE)",
+      "family": "north",
+      "architecture": "moe",
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "_notes": "Released 2026-06-09, Apache-2.0. 256K context, 64K max output, tuned for agentic software engineering. GGUF uses the cohere2moe architecture, which stock llama.cpp cannot load until PR #24260 lands \u2014 build from that branch or the model will fail to load. Sampling values are catalog defaults, NOT verified model-card values.",
+      "gguf_patterns": [
+        "North-Mini-Code-1\\.0.*\\.gguf$"
+      ],
+      "mlx_patterns": [
+        "North-Mini-Code-1\\.0.*(?:MLX|mlx|4bit|5bit|6bit|8bit)"
+      ],
+      "context_policy": {
+        "default": "native",
+        "recommended_tokens": null,
+        "verified_tokens": null
+      }
+    },
+    {
+      "id": "gemma4_12b_8bit",
+      "name": "Gemma 4 12B (Dense, encoder-free unified, 8-bit)",
+      "family": "gemma4",
+      "architecture": "dense",
+      "mlx_server": "mlx_vlm",
+      "temperature": 1.0,
+      "top_p": 0.95,
+      "top_k": 64,
+      "_notes": "Same gemma4_unified arch as gemma4_12b_dense; needs mlx_vlm. 8-bit quant split out so `gemma12` is unambiguously the 4bit QAT.",
+      "gguf_patterns": [],
+      "mlx_patterns": [
+        "gemma-4-12[Bb]-it-8bit"
+      ],
+      "context_policy": {
+        "default": "native",
+        "recommended_tokens": null,
+        "verified_tokens": null
+      },
+      "sampling_recipe": "gemma4_card"
+    },
+    {
+      "id": "gemma4_12b_dense",
+      "name": "Gemma 4 12B (Dense, encoder-free unified)",
+      "family": "gemma4",
+      "architecture": "dense",
+      "mlx_server": "mlx_vlm",
+      "temperature": 1.0,
+      "top_p": 0.95,
+      "top_k": 64,
+      "_notes": "model_type gemma4_unified \u2014 encoder-free architecture. Cannot load under mlx_lm; must use mlx_vlm >= 0.6.1.",
+      "gguf_patterns": [
+        "gemma-4-12[Bb].*\\.gguf$"
+      ],
+      "mlx_patterns": [
+        "gemma-4-12[Bb](?!.*8bit).*(?:MLX|mlx|4bit|qat)"
+      ],
+      "context_policy": {
+        "default": "native",
+        "recommended_tokens": null,
+        "verified_tokens": null
+      },
+      "sampling_recipe": "gemma4_card"
+    },
+    {
+      "id": "muse_glimmer_30b_dense",
+      "name": "Meta Muse Glimmer 30B (Dense VLM)",
+      "family": "muse_glimmer",
+      "architecture": "dense",
+      "mlx_server": "mlx_vlm",
+      "temperature": 1.0,
+      "top_p": 0.95,
+      "top_k": 64,
+      "_notes": "Dense VLM, not MoE. GGUF requires llama.cpp b10353 or newer; local b11146 supports it. MLX requires mlx_vlm >=0.6.12. Sampling follows the upstream GGUF card checked 2026-10-04 (https://huggingface.co/meta-models/Muse-Glimmer-30B-GGUF): temperature 1, top_p .95, top_k 64; neutral penalties. Reasoning cannot be disabled: template opens the thinking channel unconditionally. Control reasoning_strength low/medium/high/xhigh in chat_template_kwargs; default high. Allow sufficient completion budget and preserve reasoning_content across tool turns. Do not add an eom stop string: eom ends a message, not the turn; EOS 200001=end_of_text and 200008=eot. GGUF has an embedded Jinja template and its adjacent mmproj is auto-detected. Context is a declared limit, not a measured memory guarantee. Tools need backend-specific live conformance; registration alone does not prove them.",
+      "gguf_patterns": [
+        "Muse-Glimmer-30B[^/]*\\.gguf$"
+      ],
+      "mlx_patterns": [
+        "Muse-Glimmer-30B.*(?:MLX|mlx|4bit|5bit|6bit|8bit)"
+      ],
+      "repetition_penalty": 1.0,
+      "presence_penalty": 0.0,
+      "context_policy": {
+        "default": "native",
+        "recommended_tokens": null,
+        "verified_tokens": null
+      },
+      "sampling_recipe": "muse_card"
+    },
+    {
+      "id": "ternary_bonsai_27b",
+      "name": "Prism Ternary Bonsai 27B (2-bit)",
+      "family": "qwen3",
+      "architecture": "dense",
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "repetition_penalty": 1.05,
+      "presence_penalty": 0.2,
+      "repetition_context_size": 2048,
+      "enable_thinking": false,
+      "reasoning_effort": "medium",
+      "reasoning_budget": 4096,
+      "gguf_patterns": [],
+      "mlx_patterns": [
+        "Ternary-Bonsai-27B-mlx-2bit$"
+      ],
+      "_notes": "Separate from stock Qwen and Bonsai 2. Installed config is qwen3_5 with affine 2-bit/group_size 128 and 262144 declared context. Historical local non-thinking Qwen settings; these are NOT verified Prism sampling recommendations or a measured maximum. Preserve the installed weights. Text serving via mlx_lm requires a real completion check; vision separately requires mlx_vlm conformance.",
+      "context_policy": {
+        "default": "native",
+        "recommended_tokens": 65536,
+        "verified_tokens": null,
+        "evidence": "Inherited from qwen3_27b_dense (same Qwen3.8-27B architecture and KV-cache size; weights equal or larger): MLX 131072 prefill OOM observed there. Not separately measured. Recommended working budget set 2026-10-05; raise only with memory evidence."
+      },
+      "model_card": "https://huggingface.co/prism-ml/Ternary-Bonsai-27B-mlx-2bit"
+    }
+  ],
+  "architecture_policy": {
+    "gemma4_unified": {
+      "mlx_server": "mlx_vlm"
+    },
+    "muse_glimmer": {
+      "mlx_server": "mlx_vlm"
+    },
+    "qwen3_5_mtp": {
+      "mlx_server": "mlx_vlm",
+      "sampling": {
+        "enable_thinking": false
+      }
+    },
+    "qwen3": {
+      "sampling": {
+        "enable_thinking": false
+      }
+    },
+    "qwen3_moe": {
+      "sampling": {
+        "enable_thinking": false
+      }
+    },
+    "qwen3_5": {
+      "sampling": {
+        "enable_thinking": false
+      }
+    },
+    "qwen3_5_moe": {
+      "sampling": {
+        "enable_thinking": false
+      }
+    }
+  },
+  "sampling_recipes": {
+    "qwen38_nonthinking_card": {
+      "source": "https://huggingface.co/Qwen/Qwen3.8-27B",
+      "kind": "model_card",
+      "sampling": {
+        "temperature": 0.7,
+        "top_p": 0.8,
+        "top_k": 20,
+        "min_p": 0.0,
+        "presence_penalty": 1.5,
+        "repetition_penalty": 1.0,
+        "enable_thinking": false
+      }
+    },
+    "qwen38_thinking_card": {
+      "source": "https://huggingface.co/Qwen/Qwen3.8-27B",
+      "kind": "model_card",
+      "sampling": {
+        "temperature": 1.0,
+        "top_p": 0.95,
+        "top_k": 20,
+        "min_p": 0.0,
+        "presence_penalty": 0.0,
+        "repetition_penalty": 1.0,
+        "enable_thinking": true
+      }
+    },
+    "qwen38_local_tuning": {
+      "source": "results/qwen38_showdown/ (historical local tuning, not a vendor recommendation)",
+      "kind": "local_tuning",
+      "sampling": {
+        "temperature": 0.7,
+        "top_p": 0.95,
+        "top_k": 20,
+        "min_p": 0.0,
+        "presence_penalty": 0.2,
+        "repetition_penalty": 1.05
+      }
+    },
+    "gemma4_card": {
+      "source": "https://huggingface.co/google/gemma-4-26B-A4B-it",
+      "kind": "model_card",
+      "sampling": {
+        "temperature": 1.0,
+        "top_p": 0.95,
+        "top_k": 64,
+        "min_p": 0.0,
+        "presence_penalty": 0.0,
+        "repetition_penalty": 1.0
+      }
+    },
+    "muse_card": {
+      "source": "https://huggingface.co/meta-models/Muse-Glimmer-30B-GGUF",
+      "kind": "model_card",
+      "sampling": {
+        "temperature": 1.0,
+        "top_p": 0.95,
+        "top_k": 64,
+        "min_p": 0.0,
+        "presence_penalty": 0.0,
+        "repetition_penalty": 1.0
+      }
+    },
+    "hauhau_nonthinking_card": {
+      "source": "https://huggingface.co/HauhauCS/Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive",
+      "kind": "model_card",
+      "sampling": {
+        "temperature": 0.7,
+        "top_p": 0.8,
+        "top_k": 20,
+        "min_p": 0.0,
+        "presence_penalty": 1.5,
+        "repetition_penalty": 1.0,
+        "enable_thinking": false
+      }
+    },
+    "hauhau_thinking_card": {
+      "source": "https://huggingface.co/HauhauCS/Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive",
+      "kind": "model_card",
+      "sampling": {
+        "temperature": 1.0,
+        "top_p": 0.95,
+        "top_k": 20,
+        "min_p": 0.0,
+        "presence_penalty": 1.5,
+        "repetition_penalty": 1.0,
+        "enable_thinking": true
+      }
+    }
+  }
+}
