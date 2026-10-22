@@ -259,3 +259,60 @@ def test_status_reports_only_the_serving_ports(monkeypatch):
     server showed another app's process as one of ours."""
     monkeypatch.setattr(serve, "_probe", lambda _port: (False, None))
     assert [row["port"] for row in serve.status()] == [8080, 8085]
+
+
+# --- browser request guard --------------------------------------------------
+# The GUI is unauthenticated and can stop model servers, so another web page
+# must not drive it by DNS rebinding or by cross-site POSTs.
+
+def test_refusal_allows_the_gui_page_and_cli_clients():
+    assert serve.request_refusal({"Host": "127.0.0.1:7860"}, "127.0.0.1") is None
+    assert serve.request_refusal(
+        {"Host": "localhost:7860", "Origin": "http://localhost:7860", "Sec-Fetch-Site": "same-origin"},
+        "127.0.0.1") is None
+    assert serve.request_refusal({}, "127.0.0.1") is None
+
+
+def test_refusal_blocks_a_rebound_hostname():
+    assert serve.request_refusal(
+        {"Host": "attacker.example:7860"}, "127.0.0.1") == "unexpected Host header"
+
+
+def test_refusal_blocks_cross_site_requests_but_not_opening_the_page():
+    cross = {"Host": "127.0.0.1:7860", "Sec-Fetch-Site": "cross-site"}
+    assert serve.request_refusal(cross, "127.0.0.1") == "cross-site request refused"
+    assert serve.request_refusal(
+        {"Host": "127.0.0.1:7860", "Origin": "https://attacker.example"},
+        "127.0.0.1") == "cross-site request refused"
+    assert serve.request_refusal(cross, "127.0.0.1", navigation=True) is None
+
+
+def test_refusal_trusts_any_host_when_deliberately_bound_to_all_interfaces():
+    assert serve.request_refusal({"Host": "192.0.2.5:7860"}, "0.0.0.0") is None
+
+
+class _StopRequest:
+    def __init__(self, body: bytes):
+        self.body, self.sent = body, []
+
+    def _read_body(self):
+        return self.body
+
+    def _send_json(self, payload, code=200):
+        self.sent.append((code, payload))
+
+
+def test_stop_refuses_ports_this_gui_does_not_manage(monkeypatch):
+    # /api/stop kills whatever listens on the port; it must never reach sshd,
+    # another app's backend on :8000 or any other process of the owner's.
+    killed = []
+    monkeypatch.setattr(serve, "_kill_port", killed.append)
+    monkeypatch.setattr(serve, "_touch", lambda: None)
+    for port in (22, 8000):
+        request = _StopRequest(_json.dumps({"port": port}).encode())
+        serve.Handler._handle_stop(request)
+        assert request.sent[0][0] == 400
+    request = _StopRequest(b'{"port": 8085}')
+    serve.Handler._handle_stop(request)
+    assert request.sent == [(200, {"ok": True})]
+    assert killed == [8085]

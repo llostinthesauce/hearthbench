@@ -55,6 +55,8 @@ BACKEND_PORT = {
     "mlx-kv": MLX_PORT,
     "mlx-vlm": MLX_PORT,
 }
+# Ports this GUI starts and stops; any other listener on the machine is off limits.
+MANAGED_PORTS = frozenset(BACKEND_PORT.values())
 
 
 # ---------------------------------------------------------------------------
@@ -235,6 +237,32 @@ def serve_model(selector: str, backend: str, no_mtp: bool = False) -> dict:
 # HTTP handler
 # ---------------------------------------------------------------------------
 
+def request_refusal(headers, bound_host: str, navigation: bool = False) -> str | None:
+    """Why a request only another web page would send is refused, else None.
+
+    The GUI is unauthenticated, so any site open in the browser could otherwise
+    rebind its hostname to 127.0.0.1 or fire cross-site POSTs at /api/stop and
+    /api/serve. Its own page is same-origin. A `navigation` (opening the page
+    itself) still works from links on other sites; only its Host is checked.
+    """
+    host = headers.get("Host")
+    if host and bound_host not in ("0.0.0.0", "::"):
+        try:
+            name = urlparse("//" + host).hostname
+        except ValueError:
+            name = None
+        if name not in LOOPBACK_HOSTS | {bound_host}:
+            return "unexpected Host header"
+    if navigation:
+        return None
+    if headers.get("Sec-Fetch-Site") in ("cross-site", "same-site"):
+        return "cross-site request refused"
+    origin = headers.get("Origin")
+    if origin and urlparse(origin).netloc != host:
+        return "cross-site request refused"
+    return None
+
+
 class Handler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
 
@@ -254,9 +282,18 @@ class Handler(BaseHTTPRequestHandler):
         length = int(self.headers.get("Content-Length") or 0)
         return self.rfile.read(length) if length else b""
 
+    def _refused(self, navigation: bool = False) -> bool:
+        reason = request_refusal(self.headers, self.server.server_address[0], navigation)
+        if reason:
+            self.close_connection = True  # an unread body must not parse as a request
+            self._send_json({"error": reason}, 403)
+        return bool(reason)
+
     # -- routing ------------------------------------------------------------
     def do_GET(self) -> None:
         path = urlparse(self.path).path
+        if self._refused(navigation=path in ("/", "/index.html")):
+            return
         if path in ("/", "/index.html"):
             return self._serve_index()
         if path == "/api/models":
@@ -266,6 +303,8 @@ class Handler(BaseHTTPRequestHandler):
         self._send_json({"error": "not found"}, 404)
 
     def do_POST(self) -> None:
+        if self._refused():
+            return
         parsed = urlparse(self.path)
         path = parsed.path
         if path == "/api/serve":
@@ -301,7 +340,10 @@ class Handler(BaseHTTPRequestHandler):
         _touch()
         try:
             req = json.loads(self._read_body() or b"{}")
-            _kill_port(int(req["port"]))
+            port = int(req["port"])
+            if port not in MANAGED_PORTS:
+                raise ValueError(f"port {port} is not a model server this GUI manages")
+            _kill_port(port)
             self._send_json({"ok": True})
         except (KeyError, ValueError) as exc:
             self._send_json({"ok": False, "error": str(exc)}, 400)
@@ -337,6 +379,10 @@ class Handler(BaseHTTPRequestHandler):
 
     def _proxy_inner(self, path: str, query: dict) -> None:
         port = int(query.get("port", [LLAMACPP_PORT])[0])
+        if port not in MANAGED_PORTS:
+            self.close_connection = True
+            return self._send_json(
+                {"error": f"port {port} is not a model server this GUI manages"}, 400)
         body = self._inject_model(self._read_body(), port)
         upstream = urllib.request.Request(
             f"http://127.0.0.1:{port}{path}", data=body, method="POST",
